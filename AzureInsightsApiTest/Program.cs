@@ -12,16 +12,16 @@ using System.Threading;
 namespace AzureInsightsApiTest
 {
     class Program
-    { 
+    {
         private const string ClientId = "";
         private const string ClientSecret = "";
         private const string ResourceGroupName = "";
-        private const string ResourceType = "Microsoft.Compute/virtualMachines";
         private const string SubscriptionId = "";
         private const string TenantId = "";
 
-        private static readonly ResourceManagementClient resourceManagementClient;
         private static readonly InsightsClient insightsClient;
+        private static readonly ResourceManagementClient resourceManagementClient;
+        private static readonly string[] resourceTypes = new[] { "Microsoft.Compute/virtualMachines" };
 
         static Program()
         {
@@ -44,7 +44,7 @@ namespace AzureInsightsApiTest
             var metricDefinitions = new Dictionary<string, List<MetricDefinition>>();
 
             foreach (var resource in resourceManagementClient.Resources.List()
-                .Where(r => (r.Type == ResourceType) && (r.Id.StartsWith(resourceGroup.Id))))
+                .Where(r => (resourceTypes.Contains(r.Type)) && (r.Id.StartsWith(resourceGroup.Id))))
             {
                 var metricDefinitionsResponse = insightsClient.MetricDefinitionOperations.GetMetricDefinitions(resource.Id, "");
 
@@ -54,6 +54,7 @@ namespace AzureInsightsApiTest
                 Console.WriteLine(new string('=', 100));
                 Console.WriteLine(resource.Id);
                 Console.WriteLine();
+
                 Console.WriteLine("Available Metrics");
                 Console.WriteLine(new string('=', 100));
 
@@ -87,25 +88,20 @@ namespace AzureInsightsApiTest
                     Console.WriteLine("Available Metrics");
                     Console.WriteLine(new string('=', 100));
 
-                    var startTime = DateTimeOffset.UtcNow.AddHours(-1).ToString(dateTimeFormat);
+                    var startTime = DateTimeOffset.UtcNow.AddMinutes(-5).ToString(dateTimeFormat);
                     var endTime = DateTimeOffset.UtcNow.ToString(dateTimeFormat);
-
-                    var filter = $"startTime eq {startTime} and " +
-                        $"endTime eq {endTime} and " +
-                        $"timeGrain eq duration'PT1M'";
-
+                    var filter = $"startTime eq {startTime} and endTime eq {endTime} and timeGrain eq duration'PT1M'";
                     var getMetricsResponse = insightsClient.MetricOperations.GetMetrics(resourceId, filter);
                     var metrics = getMetricsResponse.MetricCollection.Value.Where(m => m.MetricValues.Any());
                     var maxMetricNameLength = metrics.Max(m => m.Name.Value.Length);
 
-                    foreach (var metric in getMetricsResponse.MetricCollection.Value
-                        .Where(m => m.MetricValues.Any()))
+                    foreach (var metric in getMetricsResponse.MetricCollection.Value.Where(m => m.MetricValues.Any()))
                     {
                         var lastMetricValue = metric.MetricValues.OrderByDescending(mv => mv.Timestamp).First();
 
                         Console.WriteLine(metric.Name.Value + 
                             new string(' ', (maxMetricNameLength - metric.Name.Value.Length)) +
-                            $" : [{lastMetricValue.Timestamp.ToString("t")}] [Avg {lastMetricValue.Average}]");
+                            $" : [{lastMetricValue.Timestamp.ToString("t")} UTC] [Avg {lastMetricValue.Average} {metric.Unit}]");
                     }
 
                     Console.WriteLine();
