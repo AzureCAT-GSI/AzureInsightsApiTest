@@ -13,14 +13,40 @@ namespace AzureInsightsApiTest
 {
     class Program
     {
+        // This demo requires the following:
+        // - An Azure Active Directory tenant
+        // - An Azure Active Directory application (web or desktop)
+        // - An Azure Active Directory service principal (you should use the application as the principal)
+        //   Refer to https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/
+        //   for more information.
+        // - An Azure subscription
+        //   Promote the service principal (application) to Administrator.
+        // - An Azure Resource Group (with at least one VM or other Insights-enabled resource)
+
+        // This is the client ID of the Azure Active Directory application.
+        // Refer to https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/ 
+        // for more information.
         private const string ClientId = "";
+
+        // This is the Azure Active Directory application key.
+        // Refer to https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/ 
+        // for more information.
         private const string ClientSecret = "";
+
+        // The name of the resource group that you are targeting.
         private const string ResourceGroupName = "";
+
+        // This can be found in the Azure portal. It should be a Guid.
         private const string SubscriptionId = "";
+
+        // This is the Azure Active Directory tenant Id.
         private const string TenantId = "";
 
         private static readonly InsightsClient insightsClient;
         private static readonly ResourceManagementClient resourceManagementClient;
+
+        // Specify the resource types (virtual machines, web apps, etc.) that you want to gather metrics on.
+        // Note that not all resources (NICs, etc.) expose metrics so it's good to be specific.
         private static readonly string[] resourceTypes = new[] { "Microsoft.Compute/virtualMachines" };
 
         static Program()
